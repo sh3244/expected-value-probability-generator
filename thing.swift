@@ -27,31 +27,19 @@ class Gift: CustomStringConvertible {
 }
 
 var array: [Gift] = [
-    Gift(price: 1000),
-    Gift(price: 3000),
-    Gift(price: 5000),
-    Gift(price: 6000),
-    Gift(price: 11300),
-    Gift(price: 52200),
-    Gift(price: 61000)
+    Gift(price: 21),
+    Gift(price: 84),
+    Gift(price: 189),
+    Gift(price: 210),
+    Gift(price: 252),
+    Gift(price: 294),
+    Gift(price: 441),
+    Gift(price: 1050)
 ]
 
-let target: Double = 44400
+let target: Double = 168
 
-func average(_ array: [Double]) -> Double {
-    return array.reduce(Double(0)) { result, value in return result + value } / Double(array.count)
-}
-
-//func outlierScores(gifts: [Gift]) -> [Double] {
-//    let averageGiftPrice = average(gifts.compactMap { Double($0.price) })
-//    var results: [Double] = []
-//    for gift in gifts {
-//        results.append(fabs(averageGiftPrice - Double(gift.price)))
-//    }
-//    return results
-//}
-
-var baseFactor = 10
+var baseFactor = 1
 func process(gifts: inout [Gift]) {
     var lessThanCount = 0
     var moreThanCount = 0
@@ -72,21 +60,11 @@ func process(gifts: inout [Gift]) {
     for i in lessThanCount..<lessThanCount+moreThanCount {
         moreThanIndexes.append(i)
     }
-//    print(lessThanIndexes, moreThanIndexes)
 
-//    var outlierRatings = outlierScores(gifts: gifts).compactMap { Int($0) }
-//    var maxOutlier: Int = 0
-//    for rating in outlierRatings {
-//        if rating > maxOutlier {
-//            maxOutlier = rating
-//        }
-//    }
-//    print(outlierRatings)
-
-    var simAverage = average(simulate(gifts: gifts))
+    var simAverage = simulate(gifts: gifts)
     var totalAdded = 0
     for i in 0..<500 {
-        simAverage = average(simulate(gifts: gifts))
+        simAverage = simulate(gifts: gifts)
 
         let distance = fabs(target - simAverage) / target
         if simAverage < target {
@@ -111,27 +89,24 @@ func process(gifts: inout [Gift]) {
     }
 
     let results = simulate(gifts: gifts)
-    print("\n\n=================\n\nGifts: \(gifts)\n\n=================\n\nSimulation results: \(simulate(gifts: gifts)), Target: \(target), Average: \(simAverage) \nStandard deviation of simulation: \(getStandardDeviation(results))")
+    print("\n\n=================\n\nGifts: \(gifts)\n\n=================\n\nSimulation results: \(simulate(gifts: gifts)), Target: \(target), Average: \(simAverage)")
 }
 
-func simulate(gifts: [Gift], attempts: Int = 500, iterations: Int = 10) -> [Double] {
-    var total = 0
-    var array: [Int] = []
+func simulate(gifts: [Gift], attempts: Int = 500, iterations: Int = 10) -> Double {
+    var sumProbabilities: Double = 0
     for gift in gifts {
-        array.append(contentsOf: Array(repeating: gift.price, count: gift.probability))
+        sumProbabilities += Double(gift.probability)
+    }
+    var values: [(Double, Double)] = []
+    for gift in gifts {
+        values.append((Double(gift.probability) / sumProbabilities, Double(gift.price)))
     }
 
-    var results: [Double] = []
-    for _ in 0..<iterations {
-        for _ in 0..<attempts {
-            let randomValue = Int(arc4random_uniform(UInt32(array.count)))
-            total += array[randomValue]
-        }
-        results.append(Double(total) / Double(attempts))
-        total = 0
+    var expectedResult: Double = 0
+    for value in values {
+        expectedResult += value.0 * value.1
     }
-    print("Simulation results: \(results), average: \(average(results))")
-    return results
+    return expectedResult
 }
 
 
