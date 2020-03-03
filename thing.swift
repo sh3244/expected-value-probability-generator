@@ -2,17 +2,6 @@
 
 import Accelerate
 
-// Tested 11/27/19, if population, sample == false
-func getStandardDeviation(_ arr: [Double], sample: Bool = true) -> Double {
-    var mean: Double = 0.0
-    vDSP_meanvD(arr, 1, &mean, vDSP_Length(arr.count))
-
-    var meansquare: Double = 0.0
-    vDSP_measqvD(arr, 1, &meansquare, vDSP_Length(arr.count))
-
-    return sqrt(meansquare - mean * mean) * sqrt(Double(arr.count) / Double(arr.count - (sample ? 1 : 0)))
-}
-
 class Gift: CustomStringConvertible {
     var price: Int = 0
     var probability: Int = 1
@@ -22,24 +11,26 @@ class Gift: CustomStringConvertible {
         self.price = price
     }
     var description: String {
-        return "\nGift | price: \(price), probability: \(probability)"
+        // return "\nGift | price: \(price), probability: \(probability)"
+        return "\n\(probability)"
     }
 }
 
 var array: [Gift] = [
-    Gift(price: 21),
-    Gift(price: 84),
-    Gift(price: 189),
-    Gift(price: 210),
-    Gift(price: 252),
-    Gift(price: 294),
-    Gift(price: 441),
-    Gift(price: 1050)
-]
+    84,
+    189,
+    210,
+    252,
+    294,
+    294,
+    441,
+].compactMap { Gift(price: $0) }
 
 let target: Double = 168
 
-var baseFactor = 1
+var baseFactor = 50
+
+/// Main
 func process(gifts: inout [Gift]) {
     var lessThanCount = 0
     var moreThanCount = 0
@@ -61,10 +52,10 @@ func process(gifts: inout [Gift]) {
         moreThanIndexes.append(i)
     }
 
-    var simAverage = simulate(gifts: gifts)
+    var simAverage = getExpectedValue(gifts: gifts)
     var totalAdded = 0
-    for i in 0..<500 {
-        simAverage = simulate(gifts: gifts)
+    for i in 0..<5000 {
+        simAverage = getExpectedValue(gifts: gifts)
 
         let distance = fabs(target - simAverage) / target
         if simAverage < target {
@@ -88,11 +79,11 @@ func process(gifts: inout [Gift]) {
         print(gifts, simAverage, distance)
     }
 
-    let results = simulate(gifts: gifts)
-    print("\n\n=================\n\nGifts: \(gifts)\n\n=================\n\nSimulation results: \(simulate(gifts: gifts)), Target: \(target), Average: \(simAverage)")
+    let results = getExpectedValue(gifts: gifts)
+    print("\n\n=================\n\nProbabilities: \(gifts)\n\n=================\n\ngetExpectedValue results: \(getExpectedValue(gifts: gifts)), Target: \(target), Average: \(simAverage)")
 }
 
-func simulate(gifts: [Gift], attempts: Int = 500, iterations: Int = 10) -> Double {
+func getExpectedValue(gifts: [Gift]) -> Double {
     var sumProbabilities: Double = 0
     for gift in gifts {
         sumProbabilities += Double(gift.probability)
@@ -111,4 +102,3 @@ func simulate(gifts: [Gift], attempts: Int = 500, iterations: Int = 10) -> Doubl
 
 
 process(gifts: &array)
-//simulate(gifts: array)
