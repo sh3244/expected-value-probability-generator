@@ -4,7 +4,7 @@ import Accelerate
 
 class Gift: CustomStringConvertible {
     var price: Int = 0
-    var probability: Int = 1
+    var probability: Int = 10
     var outlierScore: Int = 1
 
     init(price: Int) {
@@ -16,22 +16,23 @@ class Gift: CustomStringConvertible {
     }
 }
 
-var array: [Gift] = [
-    84,
-    189,
-    210,
-    252,
-    294,
-    294,
-    441,
-].compactMap { Gift(price: $0) }
+let parseString: String = """
+41
+175
+233
+275
+599
+"""
 
-let target: Double = 168
+let parsedArray: [Gift] = parseString.split(separator: "\n").compactMap { String($0) }.compactMap { Gift(price: Int($0) ?? -1) }
 
-var baseFactor = 50
+
+let target: Double = 200
+
+var baseFactor = 1
 
 /// Main
-func process(gifts: inout [Gift]) {
+func process(gifts: [Gift]) {
     var lessThanCount = 0
     var moreThanCount = 0
     for gift in gifts {
@@ -54,7 +55,7 @@ func process(gifts: inout [Gift]) {
 
     var simAverage = getExpectedValue(gifts: gifts)
     var totalAdded = 0
-    for i in 0..<5000 {
+    for _ in 0..<10000 {
         simAverage = getExpectedValue(gifts: gifts)
 
         let distance = fabs(target - simAverage) / target
@@ -74,13 +75,12 @@ func process(gifts: inout [Gift]) {
 
         }
 
-        if totalAdded < i / 5 { baseFactor += 2 } // For adjusting output values, adjust totalAdded multiple
-
-        print(gifts, simAverage, distance)
+        baseFactor += 1 // For adjusting output values, adjust totalAdded multiple
     }
 
-    let results = getExpectedValue(gifts: gifts)
-    print("\n\n=================\n\nProbabilities: \(gifts)\n\n=================\n\ngetExpectedValue results: \(getExpectedValue(gifts: gifts)), Target: \(target), Average: \(simAverage)")
+    var giftsValue = gifts.reduce(into: "") { $0 += "\n\($1.probability)" }
+
+    print("\n\n=================\n\nProbabilities: \(giftsValue)\n\n=================\n\ngetExpectedValue results: \(getExpectedValue(gifts: gifts)), Target: \(target), Average: \(simAverage)")
 }
 
 func getExpectedValue(gifts: [Gift]) -> Double {
@@ -101,4 +101,4 @@ func getExpectedValue(gifts: [Gift]) -> Double {
 }
 
 
-process(gifts: &array)
+process(gifts: parsedArray)
