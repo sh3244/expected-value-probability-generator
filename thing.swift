@@ -4,7 +4,7 @@ import Accelerate
 
 class Gift: CustomStringConvertible {
     var price: Int = 0
-    var probability: Int = 10
+    var probability: Int = 1
     var outlierScore: Int = 1
 
     init(price: Int) {
@@ -17,17 +17,24 @@ class Gift: CustomStringConvertible {
 }
 
 let parseString: String = """
-41
-175
-233
-275
-599
+550
+600
+925
+225
+88
+1230
+50502
+292
+11
+3
+299
+3000
 """
 
-let parsedArray: [Gift] = parseString.split(separator: "\n").compactMap { String($0) }.compactMap { Gift(price: Int($0) ?? -1) }
+let parsedArray: [Gift] = parseString.split(separator: "\n").compactMap { String($0) }.compactMap { Int($0) ?? -1 }.sorted().compactMap { Gift(price: $0) }
 
 
-let target: Double = 200
+let target: Double = 925
 
 var baseFactor = 1
 
@@ -55,30 +62,30 @@ func process(gifts: [Gift]) {
 
     var simAverage = getExpectedValue(gifts: gifts)
     var totalAdded = 0
-    for _ in 0..<10000 {
+    for _ in 0..<1000 {
         simAverage = getExpectedValue(gifts: gifts)
 
-        let distance = fabs(target - simAverage) / target
+        let distance = fabs(target - simAverage) / target * 1
         if simAverage < target {
             // Increase
             let randomValue = Int(arc4random_uniform(UInt32(moreThanIndexes.count))) + lessThanIndexes.count
-            let factor = Int(Double(baseFactor) * distance)
+            let factor = Int(Double(baseFactor) * pow(distance, 0.75))
             gifts[randomValue].probability += factor
             totalAdded += factor
         } else if simAverage > target {
             // Decrease
             let randomValue = Int(arc4random_uniform(UInt32(lessThanIndexes.count)))
-            let factor = Int(Double(baseFactor) * distance)
+            let factor = Int(Double(baseFactor) * pow(distance, 0.75))
             gifts[randomValue].probability += factor
             totalAdded += factor
         } else {
 
         }
 
-        baseFactor += 1 // For adjusting output values, adjust totalAdded multiple
+        baseFactor += 1 // Int(arc4random_uniform(2)) // For adjusting output values, adjust totalAdded multiple
     }
 
-    var giftsValue = gifts.reduce(into: "") { $0 += "\n\($1.probability)" }
+    let giftsValue = gifts.reduce(into: "") { $0 += "\nprice: \($1.price), probability: \($1.probability)" }
 
     print("\n\n=================\n\nProbabilities: \(giftsValue)\n\n=================\n\ngetExpectedValue results: \(getExpectedValue(gifts: gifts)), Target: \(target), Average: \(simAverage)")
 }
