@@ -2,6 +2,16 @@
 
 import Accelerate
 
+let parseString: String = """
+300
+500
+400
+700
+800
+2200
+"""
+let target: Double = 650
+
 class Gift: CustomStringConvertible {
     var price: Int = 0
     var probability: Int = 1
@@ -16,30 +26,26 @@ class Gift: CustomStringConvertible {
     }
 }
 
-let parseString: String = """
-550
-600
-925
-225
-88
-1230
-50502
-292
-11
-3
-299
-3000
-"""
-
 let parsedArray: [Gift] = parseString.split(separator: "\n").compactMap { String($0) }.compactMap { Int($0) ?? -1 }.sorted().compactMap { Gift(price: $0) }
 
-
-let target: Double = 925
-
-var baseFactor = 1
+func bestResults(sampleSize: Int = 1, count: Int = 100) {
+    var samples: [(Double, String)] = []
+    for _ in 0..<sampleSize {
+        samples.append(process(gifts: parsedArray))
+    }
+    var best = samples[0]
+    for sample in samples {
+        if fabs(Double(target) - sample.0) < fabs(best.0) {
+            best = sample
+        }
+    }
+    print(best.1)
+}
 
 /// Main
-func process(gifts: [Gift]) {
+func process(gifts: [Gift]) -> (Double, String) {
+    var baseFactor = 1
+
     var lessThanCount = 0
     var moreThanCount = 0
     for gift in gifts {
@@ -62,7 +68,7 @@ func process(gifts: [Gift]) {
 
     var simAverage = getExpectedValue(gifts: gifts)
     var totalAdded = 0
-    for _ in 0..<1000 {
+    for _ in 0..<10000 {
         simAverage = getExpectedValue(gifts: gifts)
 
         let distance = fabs(target - simAverage) / target * 1
@@ -82,12 +88,12 @@ func process(gifts: [Gift]) {
 
         }
 
-        baseFactor += 1 // Int(arc4random_uniform(2)) // For adjusting output values, adjust totalAdded multiple
+        baseFactor += Int(arc4random_uniform(10)) // For adjusting output values, adjust totalAdded multiple
     }
 
-    let giftsValue = gifts.reduce(into: "") { $0 += "\nprice: \($1.price), probability: \($1.probability)" }
+    let giftsValue = gifts.reduce(into: "") { $0 += "\n\tPrice: \($1.price)\tProbability: \($1.probability)" }
 
-    print("\n\n=================\n\nProbabilities: \(giftsValue)\n\n=================\n\ngetExpectedValue results: \(getExpectedValue(gifts: gifts)), Target: \(target), Average: \(simAverage)")
+    return (getExpectedValue(gifts: gifts), "\t=========================================================\n\(giftsValue)\n\n\tExpected value (random pick): \(getExpectedValue(gifts: gifts)), Target: \(target)\n")
 }
 
 func getExpectedValue(gifts: [Gift]) -> Double {
@@ -108,4 +114,10 @@ func getExpectedValue(gifts: [Gift]) -> Double {
 }
 
 
-process(gifts: parsedArray)
+//process(gifts: parsedArray)
+bestResults()
+// DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 1) { bestResults() }
+// bestResults()
+// bestResults()
+// bestResults()
+// bestResults()
